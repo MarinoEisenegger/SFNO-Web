@@ -3,7 +3,7 @@ Reconstruction Viewer
 ---------------------
 Run with:  streamlit run recon_viewer.py
 Expects:   reconstructions/{variable}/{experiment_name}.pt
-           where each .pt holds a 2-D array (Lat x Lon).
+           where each .pt holds a 2-D array (Lat × Lon).
 """
 
 import os
@@ -166,6 +166,16 @@ fig.patch.set_facecolor("#0e1117")
 
 ref_img = arrays.get(selections[ref_idx]) if ref_idx is not None else None
 
+# Shared residual colour limit — max abs error across all non-reference panels
+if ref_img is not None:
+    res_abs_max = max(
+        float(np.nanmax(np.abs(ref_img - arrays[name])))
+        for _, name in active
+        if name != selections[ref_idx]
+    )
+else:
+    res_abs_max = 1.0
+
 for col, (slot_i, name) in enumerate(active):
     img = arrays[name]
 
@@ -189,9 +199,8 @@ for col, (slot_i, name) in enumerate(active):
             ax_r.axis("off")
         else:
             residual = ref_img - img
-            abs_max = float(np.nanmax(np.abs(residual)))
             im_r = ax_r.imshow(residual, origin="lower",
-                               vmin=-abs_max, vmax=abs_max,
+                               vmin=-res_abs_max, vmax=res_abs_max,
                                cmap=cmap_res, interpolation="nearest")
             ax_r.set_title(f"{selections[ref_idx]} − {name}",
                            color="white", fontsize=8, pad=5)
